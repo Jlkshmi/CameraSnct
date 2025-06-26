@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './Billing.css';
 
 const defaultProducts = [
   { id: 1, name: 'Hikvision 2MP Camera', price: 1500 },
@@ -68,7 +69,72 @@ function Billing() {
   const totalWithTax = subtotal + (subtotal * tax) / 100;
   const grandTotal = totalWithTax - (totalWithTax * globalDiscount) / 100;
 
-  const printInvoice = () => window.print();
+  const printInvoice = () => {
+    console.log('Printing:', { billingItems, tax, globalDiscount, subtotal, grandTotal }); // Debug log
+    const printWindow = window.open('', '', 'width=800,height=600');
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Invoice</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 1cm; }
+          .logo { display: block; margin: 0 auto 20px; width: 150px; height: 50px; }
+          .invoice-title { text-align: center; margin-bottom: 10px; }
+          .invoice-header { text-align: center; margin-bottom: 5px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+          .summary { margin-top: 20px; text-align: right; }
+          .footer { margin-top: 20px; font-size: 12px; }
+          @page { size: A4; }
+        </style>
+      </head>
+      <body>
+        <img src="/images/logo camera.jpg" alt="Company Logo" class="logo" onerror="this.src='https://via.placeholder.com/150x50?text=Logo';">
+        <h2 class="invoice-title">Invoice</h2>
+        <p class="invoice-header">
+          <strong>Date:</strong> ${currentTime.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}<br>
+          <strong>Time:</strong> ${currentTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Qty</th>
+              <th>Rate (₹)</th>
+              <th>Amount (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${billingItems.length === 0 ? '<tr><td colspan="4" style="text-align: center; padding: 10px;">No items selected</td></tr>' : billingItems.map(item => `
+              <tr>
+                <td>${item.name}</td>
+                <td>${item.quantity}</td>
+                <td>${item.price}</td>
+                <td>${item.amount.toFixed(2)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div class="summary">
+          <p><strong>Subtotal:</strong> ₹${subtotal.toFixed(2)}</p>
+          <p><strong>Tax (%):</strong> ${tax}</p>
+          <p><strong>Discount (%):</strong> ${globalDiscount}</p>
+          <p><strong>Grand Total:</strong> ₹${grandTotal.toFixed(2)}</p>
+        </div>
+        <div class="footer">
+          <p>1. <strong>Warranty 12 months:</strong> Applicable on DVR, NVR, CAMERA, HDD & POE only</p>
+          <p>2. <strong>Payment terms:</strong> 70% advance payment and 30% on completion</p>
+          <p>3. <strong>This quote is valid for 10 days</strong></p>
+        </div>
+      </body>
+      </html>
+    `;
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.print();
+    printWindow.close();
+  };
 
   return (
     <>
@@ -132,8 +198,8 @@ function Billing() {
           </table>
         </div>
 
-        {/* RIGHT SIDE: Invoice */}
-        <div style={styles.right} id="invoiceArea">
+        {/* RIGHT SIDE: Invoice (Screen View) */}
+        <div style={styles.right}>
           <img
             src="/images/logo camera.jpg"
             alt="Company Logo"
@@ -144,27 +210,35 @@ function Billing() {
             }}
           />
           <h2>Invoice</h2>
-          <p><strong>Date:</strong> {currentTime.toLocaleDateString()}</p>
-          <p><strong>Time:</strong> {currentTime.toLocaleTimeString()}</p>
+          <p><strong>Date:</strong> {currentTime.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
+          <p><strong>Time:</strong> {currentTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
 
           <table style={styles.table}>
             <thead>
               <tr>
                 <th>Name</th>
                 <th>Qty</th>
-                <th>Rate</th>
-                <th>Amount</th>
+                <th>Rate (₹)</th>
+                <th>Amount (₹)</th>
               </tr>
             </thead>
             <tbody>
-              {billingItems.map((item, i) => (
-                <tr key={i}>
-                  <td>{item.name}</td>
-                  <td>{item.quantity}</td>
-                  <td>{item.price}</td>
-                  <td>{item.amount.toFixed(2)}</td>
+              {billingItems.length === 0 ? (
+                <tr>
+                  <td colSpan="4" style={{ textAlign: 'center', padding: '10px' }}>
+                    No items selected
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                billingItems.map((item, i) => (
+                  <tr key={i}>
+                    <td>{item.name}</td>
+                    <td>{item.quantity}</td>
+                    <td>{item.price}</td>
+                    <td>{item.amount.toFixed(2)}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
 
@@ -172,11 +246,21 @@ function Billing() {
             <p><strong>Subtotal:</strong> ₹{subtotal.toFixed(2)}</p>
             <p>
               <strong>Tax (%):</strong>{' '}
-              <input type="number" value={tax} onChange={e => setTax(e.target.value)} style={styles.summaryInput} />
+              <input
+                type="number"
+                value={tax}
+                onChange={(e) => setTax(parseFloat(e.target.value) || 0)}
+                style={styles.summaryInput}
+              />
             </p>
             <p>
               <strong>Discount (%):</strong>{' '}
-              <input type="number" value={globalDiscount} onChange={e => setGlobalDiscount(e.target.value)} style={styles.summaryInput} />
+              <input
+                type="number"
+                value={globalDiscount}
+                onChange={(e) => setGlobalDiscount(parseFloat(e.target.value) || 0)}
+                style={styles.summaryInput}
+              />
             </p>
             <p><strong>Grand Total:</strong> ₹{grandTotal.toFixed(2)}</p>
           </div>
@@ -190,42 +274,6 @@ function Billing() {
           <button onClick={printInvoice} style={styles.printButton}>🖨️ Print Invoice</button>
         </div>
       </div>
-
-      {/* Print-specific styles */}
-      <style>
-        {`
-          @media print {
-            .wrapper {
-              display: block !important;
-            }
-            .left {
-              display: none !important;
-            }
-            .right {
-              display: block !important;
-              width: 100% !important;
-              border: none !important;
-              background-color: white !important;
-              padding: 20px !important;
-              box-shadow: none !important;
-            }
-            .printButton {
-              display: none !important;
-            }
-            .logo {
-              display: block !important;
-              margin: 0 auto 20px !important;
-            }
-            .footer {
-              display: block !important;
-              margin-top: 20px !important;
-            }
-            @page {
-              margin: 1cm;
-            }
-          }
-        `}
-      </style>
     </>
   );
 }
