@@ -13,7 +13,11 @@ function Navbar() {
 
   return (
     <div style={styles.navbar}>
-      <div style={styles.logo}>🖼️ MyLogo</div>
+      <div style={styles.logo}>
+        <img src='\images\logo camera.jpg' style={{width:"50px"}}/>
+        <h3 style={{color:"#b19c31", margin:"0"}}>PIXEL SNCT</h3>
+        <p style={{margin:"0",color:"#b19c31", fontFamily:"Times New Roman"}}>Networks & CCTV Security</p>
+        </div>
       <div style={styles.datetime}>
         {currentTime.toLocaleDateString()} {currentTime.toLocaleTimeString()}
       </div>
@@ -26,8 +30,8 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#1e1e2f',
-    color: 'white',
+    backgroundColor: '#cdcdcd',
+    color: 'Black',
     padding: '10px 20px',
     fontFamily: 'Arial, sans-serif',
     fontSize: '16px'
